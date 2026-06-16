@@ -11,4 +11,5 @@ seaborn
 jupyter
 ipykernel
 notebook
+tokenizers
 tqdm
