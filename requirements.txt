@@ -13,3 +13,4 @@ ipykernel
 notebook
 tokenizers
 tqdm
+transformers
