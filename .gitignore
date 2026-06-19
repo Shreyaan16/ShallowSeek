@@ -2,3 +2,6 @@ notebooks/data/
 notebooks/models/
 models/
 data/
+ShallowSeek.egg-info/
+build/
+__pycache__/
