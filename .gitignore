@@ -6,3 +6,4 @@ ShallowSeek.egg-info/
 build/
 __pycache__/
 README.md
+.claude
