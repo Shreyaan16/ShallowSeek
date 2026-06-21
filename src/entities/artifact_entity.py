@@ -17,3 +17,8 @@ class DataEncoderArtifact:
     output_path: Path
     num_tokens: int
 
+@dataclass
+class DatasetArtifact:
+    num_samples: int
+    split: str
+    block_size: int

@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from pathlib import Path
-from src.constants import VOCAB_SIZE
+from src.constants import * 
 
 @dataclass
 class TokenizerConfig:
@@ -13,3 +13,10 @@ class DataEncoderConfig:
     data_path: Path = field(default_factory=lambda: Path("data/demo.txt"))
     tokenizer_path: Path = field(default_factory=lambda: Path("models/tokenizer"))
     output_path: Path = field(default_factory=lambda: Path("data/encoded.bin"))
+
+@dataclass
+class DatasetConfig:
+    encoded_path: Path = field(default_factory=lambda: Path("data/encoded.bin"))
+    block_size: int = BLOCK_SIZE
+    split: str = "train"
+    val_split: float = VAL_SPLIT
