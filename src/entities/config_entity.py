@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from pathlib import Path
-from data import VOCAB_SIZE
+from src.constants import VOCAB_SIZE
 
 @dataclass
 class TokenizerConfig:
