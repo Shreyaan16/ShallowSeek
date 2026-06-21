@@ -7,3 +7,9 @@ class TokenizerConfig:
     data_path:  Path = field(default_factory=lambda: Path("data/demo.txt"))
     tokenizer_path: Path = field(default_factory=lambda: Path("models/tokenizer"))
     vocab_size: int  = VOCAB_SIZE
+
+@dataclass
+class DataEncoderConfig:
+    data_path: Path = field(default_factory=lambda: Path("data/demo.txt"))
+    tokenizer_path: Path = field(default_factory=lambda: Path("models/tokenizer"))
+    output_path: Path = field(default_factory=lambda: Path("data/encoded.bin"))
