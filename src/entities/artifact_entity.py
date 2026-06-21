@@ -11,3 +11,9 @@ class TokenizerArtifact:
     system_id: int
     user_id: int
     assistant_id: int
+
+@dataclass
+class DataEncoderArtifact:
+    output_path: Path
+    num_tokens: int
+
