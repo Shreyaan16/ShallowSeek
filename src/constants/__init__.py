@@ -1,18 +1,17 @@
-from pathlib import Path
+# Vocabulary
+VOCAB_SIZE = 30000 # BPE vocabulary size
 
-# Vocabulary 
-VOCAB_SIZE = 30000
-
-# Tokenizer 
-SOS_TOKEN   = "<SOS>"
-EOS_TOKEN   = "<EOS>"
-PAD_TOKEN   = "<PAD>"
-SYSTEM      = "|SYSTEM|"
-USER        = "|USER|"
-ASSISTANT   = "|ASSISTANT|"
+# Tokenizer
+SOS_TOKEN = "<SOS>"  # Start-of-sequence marker
+EOS_TOKEN = "<EOS>" # End-of-sequence / document boundary
+PAD_TOKEN = "<PAD>" # Padding token (fills shorter sequences in a batch)
+SYSTEM = "|SYSTEM|" # Chat role: system prompt
+USER = "|USER|" # Chat role: user turn
+ASSISTANT = "|ASSISTANT|" # Chat role: assistant turn
 SPECIAL_TOKENS = [SOS_TOKEN, EOS_TOKEN, PAD_TOKEN, SYSTEM, USER, ASSISTANT]
-MIN_FREQ = 2
+MIN_FREQ = 2 # Minimum token frequency to be kept in BPE vocab
 
 # Dataset
-BLOCK_SIZE = 128
-VAL_SPLIT  = 0.1
+BLOCK_SIZE = 128 # Sliding-window context length (tokens per sample)
+VAL_SPLIT  = 0.1 # Fraction of encoded data held out for validation
+
