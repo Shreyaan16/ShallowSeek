@@ -48,3 +48,9 @@ class MoEArtifact:
     top_k: int
     active_params: int
     total_params: int
+
+@dataclass
+class MLAArtifact:
+    output_dim: int
+    kv_cache_per_token: int
+    n_params: int

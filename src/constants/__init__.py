@@ -29,3 +29,10 @@ D_FF_SHARED = 256 # Hidden dim of shared experts
 N_SHARED_EXPERTS = 2 # Number of shared experts (run on every token)
 N_ROUTED_EXPERTS = 8 # Total routed experts in the pool
 TOP_K = 2  # How many routed experts are selected per token
+
+# MLA
+N_HEADS = 4 # Number of attention heads
+D_HEAD_NOPE = 32 # Per-head content (NoPE) dimension
+D_C_KV = 32 # KV latent compression dim
+D_C_Q = 32 # Q latent compression dim
+DROPOUT = 0.1 # Dropout probability applied inside MLA attention

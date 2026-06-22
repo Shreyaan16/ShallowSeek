@@ -46,3 +46,13 @@ class MoEConfig:
     n_routed_experts: int = N_ROUTED_EXPERTS
     top_k: int = TOP_K
     bias_update_rate: float = 0.01
+
+@dataclass
+class MLAConfig:
+    d_model: int = D_MODEL
+    n_heads: int = N_HEADS
+    d_head_nope: int = D_HEAD_NOPE
+    d_head_rope: int = D_HEAD_ROPE
+    d_c_kv: int = D_C_KV
+    d_c_q: int = D_C_Q
+    dropout: float = DROPOUT
