@@ -25,3 +25,9 @@ class DatasetConfig:
 class RMSNormConfig:
     d_model: int = D_MODEL
     eps: float = 1e-8
+
+@dataclass
+class RoPEConfig:
+    d_rope: int = D_HEAD_ROPE
+    max_seq_len: int = BLOCK_SIZE
+    theta: float = 10000.0

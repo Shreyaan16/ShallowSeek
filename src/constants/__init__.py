@@ -17,3 +17,6 @@ VAL_SPLIT  = 0.1 # Fraction of encoded data held out for validation
 
 # RMSNorm
 D_MODEL = 128 # Hidden dimension shared across all components
+
+# RoPE 
+D_HEAD_ROPE = 16 # Per-head positional (RoPE) dimension; head-shared in MLA

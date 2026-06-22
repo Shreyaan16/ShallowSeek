@@ -28,3 +28,9 @@ class RMSNormArtifact:
     d_model: int
     eps: float
     n_params: int
+
+@dataclass
+class RoPEArtifact:
+    d_rope: int
+    max_seq_len: int
+    shape: tuple
