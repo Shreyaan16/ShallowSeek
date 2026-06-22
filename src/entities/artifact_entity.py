@@ -54,3 +54,9 @@ class MLAArtifact:
     output_dim: int
     kv_cache_per_token: int
     n_params: int
+
+@dataclass
+class MTPArtifact:
+    n_mtp: int
+    d_model: int
+    n_params: int

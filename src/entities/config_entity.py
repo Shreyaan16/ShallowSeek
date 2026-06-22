@@ -56,3 +56,9 @@ class MLAConfig:
     d_c_kv: int = D_C_KV
     d_c_q: int = D_C_Q
     dropout: float = DROPOUT
+
+@dataclass
+class MTPConfig:
+    d_model: int = D_MODEL
+    n_mtp: int = N_MTP
+    mtp_lambda: float = MTP_LAMBDA

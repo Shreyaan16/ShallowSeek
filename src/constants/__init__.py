@@ -36,3 +36,7 @@ D_HEAD_NOPE = 32 # Per-head content (NoPE) dimension
 D_C_KV = 32 # KV latent compression dim
 D_C_Q = 32 # Q latent compression dim
 DROPOUT = 0.1 # Dropout probability applied inside MLA attention
+
+# MTP
+N_MTP = 1 # Number of extra MTP prediction heads
+MTP_LAMBDA = 0.3 # Loss weight: total = main_loss + λ * avg_mtp_loss
