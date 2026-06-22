@@ -65,3 +65,11 @@ class MTPArtifact:
 class TransformerBlockArtifact:
     d_model: int
     n_params: int
+
+@dataclass
+class ModelArtifact:
+    vocab_size: int
+    d_model: int
+    n_layers: int
+    total_params: int
+    unique_params: int

@@ -68,3 +68,12 @@ class TransformerBlockConfig:
     d_model: int = D_MODEL
     mla: MLAConfig = field(default_factory=MLAConfig)
     moe: MoEConfig = field(default_factory=MoEConfig)
+
+@dataclass
+class ModelConfig:
+    vocab_size: int = VOCAB_SIZE
+    n_layers: int = N_LAYERS
+    norm: RMSNormConfig = field(default_factory=RMSNormConfig)
+    rope: RoPEConfig = field(default_factory=RoPEConfig)
+    block: TransformerBlockConfig = field(default_factory=TransformerBlockConfig)
+    mtp: MTPConfig = field(default_factory=MTPConfig)
