@@ -23,3 +23,9 @@ D_HEAD_ROPE = 16 # Per-head positional (RoPE) dimension; head-shared in MLA
 
 # Expert
 D_FF_ROUTED = 32 # Hidden dim of each tiny routed expert
+
+# MoE
+D_FF_SHARED = 256 # Hidden dim of shared experts
+N_SHARED_EXPERTS = 2 # Number of shared experts (run on every token)
+N_ROUTED_EXPERTS = 8 # Total routed experts in the pool
+TOP_K = 2  # How many routed experts are selected per token

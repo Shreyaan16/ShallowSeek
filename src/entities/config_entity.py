@@ -36,3 +36,13 @@ class RoPEConfig:
 class ExpertConfig:
     d_model: int = D_MODEL
     d_ff: int = D_FF_ROUTED
+
+@dataclass
+class MoEConfig:
+    d_model: int = D_MODEL
+    d_ff_shared: int = D_FF_SHARED
+    d_ff_routed: int = D_FF_ROUTED
+    n_shared_experts: int = N_SHARED_EXPERTS
+    n_routed_experts: int = N_ROUTED_EXPERTS
+    top_k: int = TOP_K
+    bias_update_rate: float = 0.01

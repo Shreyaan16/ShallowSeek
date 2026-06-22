@@ -40,3 +40,11 @@ class ExpertArtifact:
     d_model: int
     d_ff: int
     n_params: int
+
+@dataclass
+class MoEArtifact:
+    n_shared_experts: int
+    n_routed_experts: int
+    top_k: int
+    active_params: int
+    total_params: int
