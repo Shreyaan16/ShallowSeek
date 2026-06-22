@@ -60,3 +60,8 @@ class MTPArtifact:
     n_mtp: int
     d_model: int
     n_params: int
+
+@dataclass
+class TransformerBlockArtifact:
+    d_model: int
+    n_params: int

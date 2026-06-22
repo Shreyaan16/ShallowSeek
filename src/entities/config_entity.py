@@ -62,3 +62,9 @@ class MTPConfig:
     d_model: int = D_MODEL
     n_mtp: int = N_MTP
     mtp_lambda: float = MTP_LAMBDA
+
+@dataclass
+class TransformerBlockConfig:
+    d_model: int = D_MODEL
+    mla: MLAConfig = field(default_factory=MLAConfig)
+    moe: MoEConfig = field(default_factory=MoEConfig)
