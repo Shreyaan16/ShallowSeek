@@ -20,3 +20,6 @@ D_MODEL = 128 # Hidden dimension shared across all components
 
 # RoPE 
 D_HEAD_ROPE = 16 # Per-head positional (RoPE) dimension; head-shared in MLA
+
+# Expert
+D_FF_ROUTED = 32 # Hidden dim of each tiny routed expert

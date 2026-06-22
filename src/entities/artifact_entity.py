@@ -34,3 +34,9 @@ class RoPEArtifact:
     d_rope: int
     max_seq_len: int
     shape: tuple
+
+@dataclass
+class ExpertArtifact:
+    d_model: int
+    d_ff: int
+    n_params: int

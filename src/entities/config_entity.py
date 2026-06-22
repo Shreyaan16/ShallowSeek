@@ -31,3 +31,8 @@ class RoPEConfig:
     d_rope: int = D_HEAD_ROPE
     max_seq_len: int = BLOCK_SIZE
     theta: float = 10000.0
+
+@dataclass
+class ExpertConfig:
+    d_model: int = D_MODEL
+    d_ff: int = D_FF_ROUTED
