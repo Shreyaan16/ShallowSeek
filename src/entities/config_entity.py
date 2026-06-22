@@ -20,3 +20,8 @@ class DatasetConfig:
     block_size: int = BLOCK_SIZE
     split: str = "train"
     val_split: float = VAL_SPLIT
+
+@dataclass
+class RMSNormConfig:
+    d_model: int = D_MODEL
+    eps: float = 1e-8

@@ -22,3 +22,9 @@ class DatasetArtifact:
     num_samples: int
     split: str
     block_size: int
+
+@dataclass
+class RMSNormArtifact:
+    d_model: int
+    eps: float
+    n_params: int

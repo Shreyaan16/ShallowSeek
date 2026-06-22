@@ -15,3 +15,5 @@ MIN_FREQ = 2 # Minimum token frequency to be kept in BPE vocab
 BLOCK_SIZE = 128 # Sliding-window context length (tokens per sample)
 VAL_SPLIT  = 0.1 # Fraction of encoded data held out for validation
 
+# RMSNorm
+D_MODEL = 128 # Hidden dimension shared across all components
