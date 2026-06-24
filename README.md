@@ -221,6 +221,7 @@ ShallowSeek/
 - [x] Full ShallowSeek model with tied embeddings
 - [x] BPE tokenizer with chat special tokens
 - [x] Binary data encoder + sliding-window Dataset
+- [x] **KV-cache inference** — exploit MLA's compressed cache (`c_kv` + `k_rope`) for efficient autoregressive generation
 
 ### In Progress
 - [ ] Training pipeline (optimizer, LR scheduler, gradient clipping, checkpointing, logging)
@@ -228,6 +229,5 @@ ShallowSeek/
 ### Planned
 - [ ] **Instruction Fine-Tuning (IFT)** — supervised fine-tuning on chat-formatted data using the `|SYSTEM|`/`|USER|`/`|ASSISTANT|` tokens
 - [ ] **RLHF** — reward modeling and PPO/DPO alignment
-- [ ] **KV-cache inference** — exploit MLA's compressed cache (`c_kv` + `k_rope`) for efficient autoregressive generation
 
 ---
