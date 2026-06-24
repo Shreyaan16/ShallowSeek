@@ -22,7 +22,7 @@ class MTPModule(nn.Module):
         e_k = self.shared_embed(token_ids_k)
         fused = torch.cat([self.norm_h(h_prev), self.norm_e(e_k)], dim=-1)
         h_in = self.proj(fused)
-        h_out = self.block(h_in)
+        h_out, _ = self.block(h_in)
         return h_out, self.shared_lm_head(self.norm_out(h_out))
 
     def get_artifact(self) -> MTPArtifact:
