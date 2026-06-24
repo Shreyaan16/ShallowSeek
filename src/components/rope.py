@@ -16,7 +16,7 @@ class RotaryEmbedding(nn.Module):
 
     def forward(self, x: torch.Tensor, start_pos: int = 0) -> torch.Tensor:
         """Rotate x using pre-computed complex frequencies.
-        x: (B, H, T, d_rope)  →  (B, H, T, d_rope) rotated
+        x: (B, H, T, d_rope)  ->  (B, H, T, d_rope) rotated
         start_pos: position offset for cached decoding
         """
         B, H, T, d = x.shape

@@ -87,15 +87,19 @@ class InferenceConfig:
     max_new_tokens: int = 100
     temperature: float = 0.8
     top_k: int = 50
+    repetition_penalty: float = 1.3  # >1.0 penalises already-generated tokens
     device: str = "cpu"
 
 @dataclass
 class TrainingConfig:
     checkpoint_dir: Path = field(default_factory=lambda: Path(CHECKPOINTS_DIR))
+    tokenizer: TokenizerConfig = field(default_factory=TokenizerConfig)
+    encoder: DataEncoderConfig = field(default_factory=DataEncoderConfig)
     model: ModelConfig = field(default_factory=ModelConfig)
     train_dataset: DatasetConfig = field(default_factory=lambda: DatasetConfig(split="train"))
     val_dataset: DatasetConfig = field(default_factory=lambda: DatasetConfig(split="val"))
     lr: float = LR
+    weight_decay: float = WEIGHT_DECAY
     batch_size: int = BATCH_SIZE
     max_epochs: int = MAX_EPOCHS
     grad_clip: float = GRAD_CLIP

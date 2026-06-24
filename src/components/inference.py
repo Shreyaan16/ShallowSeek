@@ -14,7 +14,7 @@ class ShallowSeekInference:
         self.device = torch.device(cfg.device)
         self.tokenizer = self._load_tokenizer()
         self.model     = self._load_model()
-        vocab          = self.tokenizer.get_vocab()
+        vocab = self.tokenizer.get_vocab()
         self.eos_id    = vocab.get(EOS_TOKEN)
 
     def _load_tokenizer(self) -> PreTrainedTokenizerFast:
@@ -42,11 +42,12 @@ class ShallowSeekInference:
 
         with torch.no_grad():
             generated = self.model.generate(
-                prompt_ids     = prompt_tensor,
-                max_new_tokens = self.cfg.max_new_tokens,
-                temperature    = self.cfg.temperature,
-                top_k          = self.cfg.top_k,
-                eos_id         = self.eos_id,
+                prompt_ids         = prompt_tensor,
+                max_new_tokens     = self.cfg.max_new_tokens,
+                temperature        = self.cfg.temperature,
+                top_k              = self.cfg.top_k,
+                eos_id             = self.eos_id,
+                repetition_penalty = self.cfg.repetition_penalty,
             )
 
         token_ids = generated[0].tolist()
@@ -61,6 +62,7 @@ class ShallowSeekInference:
             prompt           = prompt,
             prompt_tokens    = len(prompt_ids),
             generated_tokens = len(token_ids),
+            generated_ids    = token_ids,
             response         = response_clean,
             raw_response     = response_raw,
             device           = str(self.device),

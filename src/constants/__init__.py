@@ -1,5 +1,5 @@
 # Vocabulary
-VOCAB_SIZE = 30000 # BPE vocabulary size
+VOCAB_SIZE = 520 # BPE vocabulary size
 
 # Tokenizer
 SOS_TOKEN = "<SOS>"  # Start-of-sequence marker
@@ -46,6 +46,7 @@ N_LAYERS = 4 # Number of stacked TransformerBlock layers
 
 # Training
 LR            = 3e-4  # AdamW learning rate
+WEIGHT_DECAY  = 0.1   # AdamW weight decay — penalises large weights to reduce overfitting
 BATCH_SIZE    = 16    # Samples per gradient step
 MAX_EPOCHS    = 3     # Full passes over training data
 GRAD_CLIP     = 1.0   # Max gradient norm

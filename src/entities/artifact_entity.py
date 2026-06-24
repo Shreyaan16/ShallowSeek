@@ -80,9 +80,12 @@ class InferenceArtifact:
     prompt: str
     prompt_tokens: int
     generated_tokens: int
+    generated_ids: list
     response: str
     raw_response: str
     device: str
+
+
 
 @dataclass
 class TrainingArtifact:

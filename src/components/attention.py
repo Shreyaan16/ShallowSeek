@@ -42,7 +42,7 @@ class MultiHeadLatentAttention(nn.Module):
             c_kv_full   = c_kv
             k_rope_full = k_rope_new
 
-        S = c_kv_full.shape[1]
+        S = c_kv_full.shape[1] # Total Sequence length of the Keys (K) and Values (V) that the current Queries (Q) can attend to.
 
         K_nope = to_heads(self.W_UK(c_kv_full), self.d_head_nope, S)
         V      = to_heads(self.W_UV(c_kv_full), self.d_head_nope, S)

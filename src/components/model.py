@@ -18,8 +18,7 @@ class ShallowSeek(nn.Module):
         self.lm_head.weight = self.embed.weight
         self.mtp_modules = nn.ModuleList([MTPModule(cfg.mtp, cfg.block, self.embed, self.lm_head)for _ in range(cfg.mtp.n_mtp)])
 
-    def forward(self, x: torch.Tensor, targets: torch.Tensor = None,
-                start_pos: int = 0, kv_caches: list = None):
+    def forward(self, x: torch.Tensor, targets: torch.Tensor = None, start_pos: int = 0, kv_caches: list = None):
         h = self.embed(x)
 
         new_kv_caches = []
@@ -51,27 +50,45 @@ class ShallowSeek(nn.Module):
 
     @torch.no_grad()
     def generate(self, prompt_ids: torch.Tensor, max_new_tokens: int,
-                 temperature: float = 1.0, top_k: int = None, eos_id: int = None):
+                 temperature: float = 1.0, top_k: int = None, eos_id: int = None,
+                 repetition_penalty: float = 1.0):
         self.eval()
         # prefill: process full prompt, build kv cache
         logits, _, kv_caches = self.forward(prompt_ids, start_pos=0)
         start_pos = prompt_ids.shape[1]
 
-        next_token = self._sample(logits[:, -1], temperature, top_k)    # (B,)
+        # track all token IDs seen so far (prompt + generated) for repetition penalty
+        seen_ids = prompt_ids.clone()                                     # (B, T_prompt)
+
+        next_token = self._sample(logits[:, -1], temperature, top_k,
+                                  seen_ids, repetition_penalty)
         generated  = [next_token]
+        seen_ids   = torch.cat([seen_ids, next_token.unsqueeze(1)], dim=1)
 
         for _ in range(max_new_tokens - 1):
             logits, _, kv_caches = self.forward(
                 next_token.unsqueeze(1), start_pos=start_pos, kv_caches=kv_caches)
-            next_token = self._sample(logits[:, -1], temperature, top_k)
+            next_token = self._sample(logits[:, -1], temperature, top_k,
+                                      seen_ids, repetition_penalty)
             generated.append(next_token)
+            seen_ids = torch.cat([seen_ids, next_token.unsqueeze(1)], dim=1)
             start_pos += 1
             if eos_id is not None and (next_token == eos_id).all():
                 break
 
         return torch.stack(generated, dim=1)                             # (B, n_generated)
 
-    def _sample(self, logits: torch.Tensor, temperature: float = 1.0, top_k: int = None):
+    def _sample(self, logits: torch.Tensor, temperature: float = 1.0, top_k: int = None,
+                seen_ids: torch.Tensor = None, repetition_penalty: float = 1.0):
+        # penalise tokens that have already appeared — divide their logit scores
+        if repetition_penalty != 1.0 and seen_ids is not None:
+            for b in range(logits.shape[0]):
+                for tid in seen_ids[b].unique():
+                    if logits[b, tid] > 0:
+                        logits[b, tid] /= repetition_penalty
+                    else:
+                        logits[b, tid] *= repetition_penalty
+
         if temperature == 0.0:
             return logits.argmax(dim=-1)
         logits = logits / temperature
