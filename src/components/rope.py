@@ -14,13 +14,14 @@ class RotaryEmbedding(nn.Module):
         freqs_cis = torch.polar(torch.ones_like(angles), angles)  # (T, d_rope//2) complex64
         self.register_buffer("freqs_cis", freqs_cis)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor, start_pos: int = 0) -> torch.Tensor:
         """Rotate x using pre-computed complex frequencies.
         x: (B, H, T, d_rope)  →  (B, H, T, d_rope) rotated
+        start_pos: position offset for cached decoding
         """
         B, H, T, d = x.shape
         x_c = torch.view_as_complex(x.float().reshape(B, H, T, d // 2, 2))
-        f  = self.freqs_cis[:T].unsqueeze(0).unsqueeze(0)
+        f  = self.freqs_cis[start_pos : start_pos + T].unsqueeze(0).unsqueeze(0)
         out = torch.view_as_real(x_c * f).reshape(B, H, T, d)
         return out.to(x.dtype)
 
