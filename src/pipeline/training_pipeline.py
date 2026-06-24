@@ -68,12 +68,23 @@ class TrainingPipeline:
 
     def train(self) -> TrainingArtifact:
         print("--- Phase 2: Training ---")
+        best_ckpt = BEST_CHECKPOINT_PATH
+        if best_ckpt.exists():
+            print(f"Checkpoint already exists: {best_ckpt} — skipping training")
+            state = torch.load(best_ckpt, map_location=self.device, weights_only=True)
+            self.model.load_state_dict(state.get("model", state))
+            return TrainingArtifact(
+                final_train_loss = 0.0,
+                final_val_loss   = 0.0,
+                total_steps      = state.get("step", 0),
+                checkpoint_path  = best_ckpt,
+            )
+
         self.model.train()
         step        = 0
         train_loss  = 0.0
         val_loss    = 0.0
         best_val    = float("inf")
-        best_ckpt   = BEST_CHECKPOINT_PATH
 
         for epoch in range(self.cfg.max_epochs):
             for x, y in self.train_loader:

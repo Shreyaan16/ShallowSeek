@@ -105,3 +105,9 @@ class TrainingConfig:
     grad_clip: float = GRAD_CLIP
     eval_interval: int = EVAL_INTERVAL
     device: str = "cuda" if torch.cuda.is_available() else "cpu"
+
+@dataclass
+class InferencePipelineConfig:
+    inference: InferenceConfig = field(default_factory=InferenceConfig)
+    prompts: list = field(default_factory=list)
+    use_chat_format: bool = False  # False = pretrain completion, True = SFT chat mode
