@@ -1,23 +1,23 @@
 from dataclasses import dataclass, field
 from src.constants import * 
 from pathlib import Path
-
+from src.configurations.paths_config import DATA_PATH, ENCODED_PATH, TOKENIZER_DIR
 
 @dataclass
 class TokenizerConfig:
-    data_path:  Path = field(default_factory=lambda: Path("data/demo.txt"))
-    tokenizer_path: Path = field(default_factory=lambda: Path("models/tokenizer"))
+    data_path:  Path = field(default_factory=lambda: DATA_PATH)
+    tokenizer_path: Path = field(default_factory=lambda: TOKENIZER_DIR)
     vocab_size: int  = VOCAB_SIZE
 
 @dataclass
 class DataEncoderConfig:
-    data_path: Path = field(default_factory=lambda: Path("data/demo.txt"))
-    tokenizer_path: Path = field(default_factory=lambda: Path("models/tokenizer"))
-    output_path: Path = field(default_factory=lambda: Path("data/encoded.bin"))
+    data_path: Path = field(default_factory=lambda: DATA_PATH)
+    tokenizer_path: Path = field(default_factory=lambda: TOKENIZER_DIR)
+    output_path: Path = field(default_factory=lambda: ENCODED_PATH)
 
 @dataclass
 class DatasetConfig:
-    encoded_path: Path = field(default_factory=lambda: Path("data/encoded.bin"))
+    encoded_path: Path = field(default_factory=lambda: ENCODED_PATH)
     block_size: int = BLOCK_SIZE
     split: str = "train"
     val_split: float = VAL_SPLIT
@@ -81,7 +81,7 @@ class ModelConfig:
 
 @dataclass
 class InferenceConfig:
-    tokenizer_path: Path = field(default_factory=lambda: Path("models/tokenizer"))
+    tokenizer_path: Path = field(default_factory=lambda: TOKENIZER_DIR)
     checkpoint_path: Path = field(default_factory=lambda: Path("models/checkpoint.pt"))
     max_new_tokens: int = 100
     temperature: float = 0.8
