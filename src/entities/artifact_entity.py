@@ -73,3 +73,12 @@ class ModelArtifact:
     n_layers: int
     total_params: int
     unique_params: int
+
+@dataclass
+class InferenceArtifact:
+    prompt: str
+    prompt_tokens: int
+    generated_tokens: int
+    response: str
+    raw_response: str
+    device: str

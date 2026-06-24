@@ -77,3 +77,12 @@ class ModelConfig:
     rope: RoPEConfig = field(default_factory=RoPEConfig)
     block: TransformerBlockConfig = field(default_factory=TransformerBlockConfig)
     mtp: MTPConfig = field(default_factory=MTPConfig)
+
+@dataclass
+class InferenceConfig:
+    tokenizer_path: Path = field(default_factory=lambda: Path("models/tokenizer"))
+    checkpoint_path: Path = field(default_factory=lambda: Path("models/checkpoint.pt"))
+    max_new_tokens: int = 100
+    temperature: float = 0.8
+    top_k: int = 50
+    device: str = "cpu"
