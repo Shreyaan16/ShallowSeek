@@ -1,7 +1,8 @@
 from dataclasses import dataclass, field
 from src.constants import * 
 from pathlib import Path
-from src.configurations.paths_config import DATA_PATH, ENCODED_PATH, TOKENIZER_DIR
+from src.configurations.paths_config import DATA_PATH, ENCODED_PATH, TOKENIZER_DIR, CHECKPOINTS_DIR
+import torch
 
 @dataclass
 class TokenizerConfig:
@@ -87,3 +88,16 @@ class InferenceConfig:
     temperature: float = 0.8
     top_k: int = 50
     device: str = "cpu"
+
+@dataclass
+class TrainingConfig:
+    checkpoint_dir: Path = field(default_factory=lambda: Path(CHECKPOINTS_DIR))
+    model: ModelConfig = field(default_factory=ModelConfig)
+    train_dataset: DatasetConfig = field(default_factory=lambda: DatasetConfig(split="train"))
+    val_dataset: DatasetConfig = field(default_factory=lambda: DatasetConfig(split="val"))
+    lr: float = LR
+    batch_size: int = BATCH_SIZE
+    max_epochs: int = MAX_EPOCHS
+    grad_clip: float = GRAD_CLIP
+    eval_interval: int = EVAL_INTERVAL
+    device: str = "cuda" if torch.cuda.is_available() else "cpu"

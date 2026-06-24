@@ -83,3 +83,10 @@ class InferenceArtifact:
     response: str
     raw_response: str
     device: str
+
+@dataclass
+class TrainingArtifact:
+    final_train_loss: float
+    final_val_loss: float
+    total_steps: int
+    checkpoint_path: Path
