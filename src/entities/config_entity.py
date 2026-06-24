@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
-from pathlib import Path
 from src.constants import * 
+from pathlib import Path
+
 
 @dataclass
 class TokenizerConfig:

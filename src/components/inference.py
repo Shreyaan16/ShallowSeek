@@ -102,7 +102,6 @@ if __name__ == "__main__":
         print(f"Generated tokens: {artifact.generated_tokens}")
         print(f"Response (clean): {artifact.response!r}")
         print(f"Response (raw)  : {artifact.raw_response!r}")
-        print("-" * 50)
 
 
 
