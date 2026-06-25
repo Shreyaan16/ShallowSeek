@@ -2,7 +2,7 @@
 
 A from-scratch PyTorch implementation of the DeepSeek V3 pretraining architecture — built to understand every component from the ground up.
 
-> **Status: Active development.** Pretraining + training pipeline complete. Optimized KV-cache inference done. IFT and RLHF next.
+> **Status: Active development.** Pretraining + training pipeline complete. Optimized KV-cache inference done
 
 **Dataset:** Plaintext Wikipedia (full English) — https://www.kaggle.com/datasets/ffatty/plaintext-wikipedia-full-english (~500 MB)
 
@@ -284,9 +284,4 @@ ShallowSeek/
 - [x] Sliding-window eviction — `offset` tracking keeps causal mask correct when context exceeds `max_seq_len`
 - [x] `SystemPromptCache` — prefill system tokens once at startup, clone per query (lazy: only built on first chat request, never during pretraining inference)
 - [x] Inference engine — `ShallowSeekInference` with BPE boundary-safe sys/user token split
-
-### Planned
-- [ ] **Instruction Fine-Tuning (IFT)** — supervised fine-tuning on chat-formatted data using the `|SYSTEM|`/`|USER|`/`|ASSISTANT|` tokens; enables `SystemPromptCache` to be meaningful
-- [ ] **RLHF** — reward modeling and PPO/DPO alignment
-
 ---
