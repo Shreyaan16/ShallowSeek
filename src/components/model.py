@@ -4,7 +4,8 @@ import torch.nn.functional as F
 from src.components.norm import RMSNorm
 from src.components.block import TransformerBlock
 from src.components.mtp import MTPModule
-from src.entities.config_entity import ModelConfig, RMSNormConfig
+from src.components.kv_cache import KVCache
+from src.entities.config_entity import ModelConfig, RMSNormConfig, KVCacheConfig
 from src.entities.artifact_entity import ModelArtifact
 
 class ShallowSeek(nn.Module):
@@ -21,16 +22,14 @@ class ShallowSeek(nn.Module):
     def forward(self, x: torch.Tensor, targets: torch.Tensor = None, start_pos: int = 0, kv_caches: list = None):
         h = self.embed(x)
 
-        new_kv_caches = []
         for i, block in enumerate(self.blocks):
             cache_i = kv_caches[i] if kv_caches is not None else None
-            h, new_cache = block(h, start_pos=start_pos, kv_cache=cache_i)
-            new_kv_caches.append(new_cache)
+            h, _ = block(h, start_pos=start_pos, kv_cache=cache_i)  # caches mutated in-place
 
         main_logits = self.lm_head(self.norm_out(h))
 
         if targets is None:
-            return main_logits, None, new_kv_caches
+            return main_logits, None, kv_caches
 
         n_mtp  = self.cfg.mtp.n_mtp
         T  = x.shape[1]
@@ -46,33 +45,44 @@ class ShallowSeek(nn.Module):
             mtp_losses.append(F.cross_entropy(logits_k.reshape(-1, self.cfg.vocab_size), target_k.reshape(-1)))
         mtp_loss   = sum(mtp_losses) / n_mtp
         total_loss = main_loss + self.cfg.mtp.mtp_lambda * mtp_loss
-        return main_logits, total_loss, new_kv_caches
+        return main_logits, total_loss, kv_caches
 
     @torch.no_grad()
     def generate(self, prompt_ids: torch.Tensor, max_new_tokens: int,
                  temperature: float = 1.0, top_k: int = None, eos_id: int = None,
-                 repetition_penalty: float = 1.0):
+                 repetition_penalty: float = 1.0, kv_caches: list = None):
         self.eval()
-        # prefill: process full prompt, build kv cache
-        logits, _, kv_caches = self.forward(prompt_ids, start_pos=0)
-        start_pos = prompt_ids.shape[1]
+        B, T_prompt = prompt_ids.shape
+        device = prompt_ids.device
 
-        # track all token IDs seen so far (prompt + generated) for repetition penalty
-        seen_ids = prompt_ids.clone()                                     # (B, T_prompt)
+        if kv_caches is None:
+            # cold start: allocate a fresh cache sized for the full budget
+            kv_cfg = KVCacheConfig(B=B, max_seq_len=T_prompt + max_new_tokens,
+                                   d_c_kv=self.cfg.block.mla.d_c_kv,
+                                   d_head_rope=self.cfg.block.mla.d_head_rope)
+            kv_caches = [KVCache(kv_cfg, device) for _ in range(self.cfg.n_layers)]
 
+        # warm start (pre-populated sys cache): start_pos = kv_caches[0].filled
+        start_pos = kv_caches[0].filled
+
+        # prefill prompt (or user portion when sys cache is pre-populated)
+        logits, _, _ = self.forward(prompt_ids, start_pos=start_pos, kv_caches=kv_caches)
+        start_pos = kv_caches[0].filled                                   # updated in-place
+
+        seen_ids  = prompt_ids.clone()
         next_token = self._sample(logits[:, -1], temperature, top_k,
                                   seen_ids, repetition_penalty)
         generated  = [next_token]
         seen_ids   = torch.cat([seen_ids, next_token.unsqueeze(1)], dim=1)
 
         for _ in range(max_new_tokens - 1):
-            logits, _, kv_caches = self.forward(
-                next_token.unsqueeze(1), start_pos=start_pos, kv_caches=kv_caches)
+            logits, _, _ = self.forward(next_token.unsqueeze(1),
+                                        start_pos=start_pos, kv_caches=kv_caches)
+            start_pos = kv_caches[0].filled
             next_token = self._sample(logits[:, -1], temperature, top_k,
                                       seen_ids, repetition_penalty)
             generated.append(next_token)
             seen_ids = torch.cat([seen_ids, next_token.unsqueeze(1)], dim=1)
-            start_pos += 1
             if eos_id is not None and (next_token == eos_id).all():
                 break
 

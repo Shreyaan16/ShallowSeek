@@ -50,6 +50,13 @@ class MoEConfig:
     bias_update_rate: float = 0.01
 
 @dataclass
+class KVCacheConfig:
+    B: int = B
+    max_seq_len: int = BLOCK_SIZE
+    d_c_kv: int = D_C_KV
+    d_head_rope: int = D_HEAD_ROPE
+
+@dataclass
 class MLAConfig:
     d_model: int = D_MODEL
     n_heads: int = N_HEADS

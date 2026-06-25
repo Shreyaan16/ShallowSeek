@@ -51,3 +51,6 @@ BATCH_SIZE    = 16    # Samples per gradient step
 MAX_EPOCHS    = 3     # Full passes over training data
 GRAD_CLIP     = 1.0   # Max gradient norm
 EVAL_INTERVAL = 100   # Evaluate on val set every N steps
+
+# KV Cache
+B = 1 # Batch size for KV cache (prefill is always single-batch)

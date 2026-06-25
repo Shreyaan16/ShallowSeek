@@ -2,10 +2,14 @@ import torch
 from pathlib import Path
 from transformers import PreTrainedTokenizerFast
 from src.components.model import ShallowSeek
+from src.components.system_prompt import SystemPromptCache
 from src.entities.config_entity import ModelConfig, InferenceConfig
 from src.entities.artifact_entity import InferenceArtifact
-from src.constants import SOS_TOKEN, EOS_TOKEN, SYSTEM, USER, ASSISTANT
+from src.constants import SOS_TOKEN, EOS_TOKEN, SYSTEM, USER, ASSISTANT, BLOCK_SIZE
 from src.utils import encode, decode
+
+_DEFAULT_SYSTEM = "You are ShallowSeek, a helpful AI assistant."
+_SYS_PREFIX     = f"{SOS_TOKEN} {SYSTEM} {_DEFAULT_SYSTEM} {USER} "
 
 
 class ShallowSeekInference:
@@ -15,7 +19,8 @@ class ShallowSeekInference:
         self.tokenizer = self._load_tokenizer()
         self.model     = self._load_model()
         vocab = self.tokenizer.get_vocab()
-        self.eos_id    = vocab.get(EOS_TOKEN)
+        self.eos_id     = vocab.get(EOS_TOKEN)
+        self._sys_cache = None  # built lazily on first chat request
 
     def _load_tokenizer(self) -> PreTrainedTokenizerFast:
         tok = PreTrainedTokenizerFast.from_pretrained(str(self.cfg.tokenizer_path))
@@ -33,21 +38,40 @@ class ShallowSeekInference:
         model.eval()
         return model
 
-    def build_prompt(self, user_msg: str, system: str = "You are ShallowSeek, a helpful AI assistant.") -> str:
+    def _build_sys_cache(self) -> SystemPromptCache:
+        sys_prefix = f"{SOS_TOKEN} {SYSTEM} {_DEFAULT_SYSTEM} {USER} "
+        sys_ids    = encode(self.tokenizer, sys_prefix)
+        return SystemPromptCache(self.model, sys_ids, BLOCK_SIZE, self.device)
+
+    def build_prompt(self, user_msg: str, system: str = _DEFAULT_SYSTEM) -> str:
         return f"{SOS_TOKEN} {SYSTEM} {system} {USER} {user_msg} {ASSISTANT}"
 
     def generate(self, prompt: str) -> InferenceArtifact:
-        prompt_ids    = encode(self.tokenizer, prompt)
-        prompt_tensor = torch.tensor([prompt_ids], dtype=torch.long, device=self.device)
+        prompt_ids = encode(self.tokenizer, prompt)
+
+        # Split on the string boundary to avoid BPE boundary merges corrupting the token count.
+        # Tokenizing the full prompt as one string can produce fewer tokens than the prefix alone
+        # (BPE merges across the boundary), making prompt_tensor[:, sys_len:] empty or wrong.
+        if prompt.startswith(_SYS_PREFIX):
+            if self._sys_cache is None:
+                self._sys_cache = self._build_sys_cache()
+            user_ids  = encode(self.tokenizer, prompt[len(_SYS_PREFIX):])
+            kv_caches = self._sys_cache.clone_caches()
+        else:
+            user_ids  = prompt_ids
+            kv_caches = None
+
+        user_tensor = torch.tensor([user_ids], dtype=torch.long, device=self.device)
 
         with torch.no_grad():
             generated = self.model.generate(
-                prompt_ids         = prompt_tensor,
+                prompt_ids         = user_tensor,
                 max_new_tokens     = self.cfg.max_new_tokens,
                 temperature        = self.cfg.temperature,
                 top_k              = self.cfg.top_k,
                 eos_id             = self.eos_id,
                 repetition_penalty = self.cfg.repetition_penalty,
+                kv_caches          = kv_caches,
             )
 
         token_ids = generated[0].tolist()
