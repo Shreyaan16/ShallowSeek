@@ -2,7 +2,7 @@
 
 A from-scratch PyTorch implementation of the DeepSeek V3 pretraining architecture — built to understand every component from the ground up.
 
-> **Status: Active development.** Pretraining architecture complete. IFT, RLHF, and KV-cache inference planned next.
+> **Status: Active development.** Pretraining + training pipeline complete. Optimized KV-cache inference done. IFT and RLHF next.
 
 **Dataset:** Plaintext Wikipedia (full English) — https://www.kaggle.com/datasets/ffatty/plaintext-wikipedia-full-english (~500 MB)
 
@@ -74,6 +74,13 @@ Each head's full Q and K are `[NoPE | RoPE]` concatenated. Attention is computed
 
 **KV cache at inference:** only `c_kv` (`d_c_kv` dims) and `k_rope` (`d_head_rope` dims) need caching per token — far smaller than standard MHA which caches `n_heads × d_head` per token for both K and V.
 
+Cache size comparison per token per layer:
+
+| Method | Cache dims | This model |
+|---|---|---|
+| Standard MHA | `2 × n_heads × d_head = 2 × 4 × 48 = 384` | — |
+| MLA (this) | `d_c_kv + d_head_rope = 32 + 16 = 48` | 8× smaller |
+
 ### 4. Mixture of Experts (MoE) — `src/components/moe.py`
 
 Each `TransformerBlock` replaces the standard FFN with a MoE layer containing two expert types:
@@ -120,7 +127,53 @@ The total training loss is:
 L = L_main + λ × mean(L_mtp_1, ..., L_mtp_n)
 ```
 
-### 7. ShallowSeek (full model) — `src/components/model.py`
+### 7. KV Cache — `src/components/kv_cache.py`
+
+Pre-allocated, write-in-place cache that eliminates `torch.cat` allocations during decoding.
+
+**Design:**
+- Buffer allocated once at generation start: `(B, max_seq_len, d_c_kv)` for `c_kv`, `(B, 1, max_seq_len, d_head_rope)` for `k_rope`
+- Each decode step writes one token into the buffer at `start_pos` — zero new allocations
+- **Sliding window eviction:** when `filled == max_seq_len`, oldest tokens are shifted out and `offset` is incremented to track the absolute position of slot 0
+- The causal mask in attention uses `offset` so positions stay correct after eviction
+
+```
+Before eviction (max_seq_len=5, generating token at pos 5):
+  slot:  0    1    2    3    4
+  pos:  [0]  [1]  [2]  [3]  [4]   filled=5, offset=0
+
+After eviction:
+  slot:  0    1    2    3    4
+  pos:  [1]  [2]  [3]  [4]  [5]   filled=5, offset=1  ← tok0 gone
+```
+
+**Performance vs old dict + `torch.cat` approach:**
+
+| | Old (dict + cat) | New (KVCache) |
+|---|---|---|
+| Memory per step | O(S) new alloc | O(1) in-place write |
+| Total over N steps | O(N²) | O(N) |
+| Python object churn | New dict every step × every layer | Zero |
+
+### 8. System Prompt Cache — `src/components/system_prompt.py`
+
+Runs a single prefill pass over the fixed system prompt tokens at engine startup and stores the resulting KV state. Each user query clones that state instead of re-processing the system prefix.
+
+**Only active after SFT.** During pretraining inference (`use_chat_format=False`) the cache is never built — it is initialized lazily and only triggered when a prompt starts with the `|SYSTEM|` template. The pretrained model has not seen those special tokens during training, so the cache would be meaningless anyway.
+
+```
+Startup:  prefill("<SOS> |SYSTEM| You are ShallowSeek |USER| ")
+          → KV slots 0..9 filled, saved in _sys_cache
+
+Query:    clone _sys_cache  (O(sys_len) copy, once per query)
+          prefill("What is gravity? |ASSISTANT|") at start_pos=10
+          decode from start_pos=15 onward
+
+Saving:   sys_len × (d_c_kv + d_head_rope) × n_layers tokens of recomputation
+          avoided on every query
+```
+
+### 9. ShallowSeek (full model) — `src/components/model.py`
 
 Assembles all components into the full autoregressive LM. Key design choices:
 
@@ -198,10 +251,13 @@ ShallowSeek/
 │   │   ├── block.py            # TransformerBlock (MLA + MoE)
 │   │   ├── mtp.py              # Multi-Token Prediction module
 │   │   ├── model.py            # ShallowSeek (full model)
+│   │   ├── kv_cache.py         # Pre-allocated KVCache with sliding-window eviction
+│   │   ├── system_prompt.py    # SystemPromptCache (prefill sys tokens once, clone per query)
+│   │   ├── inference.py        # ShallowSeekInference engine
 │   │   ├── tokenizer.py        # BPE tokenizer
 │   │   ├── encoder.py          # Text → binary token file
 │   │   └── dataset.py          # Sliding-window Dataset
-│   └── pipeline/               # Training pipeline (WIP)
+│   └── pipeline/               # Training + inference pipelines
 └── data/
     ├── demo.txt                # Raw text corpus
     └── encoded.bin             # Tokenized binary output
@@ -211,7 +267,7 @@ ShallowSeek/
 
 ## Roadmap
 
-### Done — Pretraining Architecture
+### Done — Pretraining
 - [x] RMSNorm
 - [x] Rotary Position Embeddings (RoPE) with complex-number formulation
 - [x] Multi-Head Latent Attention (MLA) with low-rank KV compression and head-shared RoPE K
@@ -221,13 +277,16 @@ ShallowSeek/
 - [x] Full ShallowSeek model with tied embeddings
 - [x] BPE tokenizer with chat special tokens
 - [x] Binary data encoder + sliding-window Dataset
-- [x] **KV-cache inference** — exploit MLA's compressed cache (`c_kv` + `k_rope`) for efficient autoregressive generation
+- [x] Training pipeline — AdamW + cosine LR schedule + gradient clipping + val checkpointing
 
-### In Progress
-- [ ] Training pipeline (optimizer, LR scheduler, gradient clipping, checkpointing, logging)
+### Done — Optimized KV-Cache Inference
+- [x] `KVCache` — pre-allocated write-in-place buffer, zero `torch.cat` allocations during decode
+- [x] Sliding-window eviction — `offset` tracking keeps causal mask correct when context exceeds `max_seq_len`
+- [x] `SystemPromptCache` — prefill system tokens once at startup, clone per query (lazy: only built on first chat request, never during pretraining inference)
+- [x] Inference engine — `ShallowSeekInference` with BPE boundary-safe sys/user token split
 
 ### Planned
-- [ ] **Instruction Fine-Tuning (IFT)** — supervised fine-tuning on chat-formatted data using the `|SYSTEM|`/`|USER|`/`|ASSISTANT|` tokens
+- [ ] **Instruction Fine-Tuning (IFT)** — supervised fine-tuning on chat-formatted data using the `|SYSTEM|`/`|USER|`/`|ASSISTANT|` tokens; enables `SystemPromptCache` to be meaningful
 - [ ] **RLHF** — reward modeling and PPO/DPO alignment
 
 ---
